@@ -1,10 +1,11 @@
 const express=require('express')
 const router = express.Router();
 const authMiddleware=require('../Middleware/middleware.js')
-const {verifyotp,register,login,deletedproduct,addproduct,updateproduct,getproduct}=require('../Controller/sendemail.js')
+const {verifyotp,register,login,deletedproduct,addproduct,updateproduct,getproduct,forgotpassword}=require('../Controller/sendemail.js')
 router.post('/sendEmail',register)
 router.post('/verifyotp',verifyotp)
 router.post('/login',login)
+router.post('/forgotpassword',forgotpassword)
 router.post('/addproduct',authMiddleware,addproduct)
 router.get('/getproduct',authMiddleware,getproduct)
 router.put('/updateproduct/:id',authMiddleware,updateproduct)

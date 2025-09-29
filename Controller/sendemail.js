@@ -111,6 +111,32 @@ async function verifyotp(req, res)
     res.status(500).json({ error: "Server error" });
   }
 }
+async function forgotpassword(req,res)
+{
+try{
+  const {email,oldpassword,newpassword}=req.body
+  if(!email)
+  {
+    return res.status(400).json({error:"please enter your email"})
+  }
+  const user=await User.findOneAndUpdate({email},{password:newpassword},{new:true})
+  if(!user)
+  {
+    return res.status(400).json({error:"user not found"})
+  }
+  res.status(200).json({message:"password changed successfully"})
+}
+catch(err)
+{
+  console.log(err);
+}
+
+}
+
+
+
+
+
 
 
 async function addproduct(req,res)
@@ -208,5 +234,9 @@ async function deletedproduct(req, res)
 });
 console.log("Message sent: %s", info.messageId);
   }
-module.exports={register,verifyotp,login,addproduct,getproduct,updateproduct,deletedproduct}
+
+
+
+module.exports={register,verifyotp,login,addproduct,getproduct,updateproduct,deletedproduct,forgotpassword}
+
 
