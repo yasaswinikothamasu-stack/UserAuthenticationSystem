@@ -31,7 +31,7 @@ temp/
 coverage/
 
 # Optional: npm lock files if you don't want to commit them
-# package-lock.json
+package-lock.json
 # yarn.lock
 
 # Optional: uploads or generated files
