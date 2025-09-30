@@ -1,11 +1,8 @@
 const jwt = require("jsonwebtoken");
-
 const authMiddleware = (req, res, next) => {
   let token = req.cookies.jwt; // safe navigation
-
   console.log("Cookies:", req.cookies);
   console.log("Token from cookie:", token);
-
   if (!token && req.headers.authorization?.startsWith("Bearer ")) {
     token = req.headers.authorization.split(" ")[1];
   }

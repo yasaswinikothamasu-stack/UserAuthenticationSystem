@@ -12,17 +12,14 @@ dotenv.config()
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
-const authRoutes = require('./Router/router');
+
+const productRoutes = require('./Router/productrouter.js');
+const authRoutes = require('./Router/authenticationrouter.js');
+
 app.use('/api', authRoutes);
-
-app.get('/', (req, res) => {
-  res.send('Welcome to home!');
-});
-
-
-app.set('view engine',"ejs");
-app.set('views', path.join(__dirname, 'views'));
+app.use('/api', productRoutes);
 
 PORT=3000;
 
