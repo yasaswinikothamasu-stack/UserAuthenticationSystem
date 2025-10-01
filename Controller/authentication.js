@@ -3,62 +3,89 @@
  app.use(express.json());
  app.use(express.urlencoded({ extended: true }));
 const User = require('../Model/usermodel')
-
+const multer = require("multer");
+const cloudinary =require("cloudinary").v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+  secure: true
+});
+const fs = require("fs");
 const jwt=require('jsonwebtoken')
 const dotenv=require('dotenv')
 dotenv.config()
 const nodemailer=require('nodemailer')
 
 
+async function register(req, res) {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).send("All fields required");
+    }
+
+    let profilePicUrl = " "; // default
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "user_uploads",
+      });
+      fs.unlinkSync(req.file.path);
+      profilePicUrl = result.secure_url;
+    }
+    console.log(profilePicUrl);
+
+    // 2️⃣ Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    // 3️⃣ Save user
+    const user = new User({
+      name,
+      email,
+      password, // hash in production
+      profilePic: profilePicUrl,
+      otp,
+      otpExpiresAt,
+    });
+    const savedUser = await user.save();
+
+    // 4️⃣ Send OTP email
+    await sendEmail(
+      email,
+      "Email Verification",
+      `Your OTP for email verification is ${otp}. It expires in 10 minutes.`
+    );
+
+    // 5️⃣ Generate JWT token
+    const token = jwt.sign(
+      { id: savedUser._id, email: savedUser.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+    });
+
+    // 6️⃣ Send final response
+    res.status(200).json({
+      token,
+      message: "Registration successful, OTP sent to email",
+    });
+
+    console.log("User saved:", savedUser, "OTP sent:", otp);
+  } catch (err) {
+    console.error("Error in /register:", err);
+    res.status(500).send("Error during registration and OTP sending");
+  }
+}
 
 
 
-async function register(req, res)
- {
-   try {
-     const { name, email, password } = req.body;
-     console.log(req.body);
-     if (!name || !email || !password) {
-       return res.status(400).send("All fields required");
-     }
- 
-     let profilePic = null;
-     if (req.file) {
-       profilePic = req.file.path; 
-     }
- 
-     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-     const expiry = new Date(Date.now() + 10 * 60 * 1000);
-     const user = new User({
-       name,
-       email,
-       password,
-       profilePic: profilePic,
-       otp,
-       otpExpiresAt: expiry
-     });
-     const savedUser = await user.save();
-     const token = jwt.sign({ id: savedUser._id, email: savedUser.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-     res.cookie("jwt", token, {
-       httpOnly: true,
-       secure: false,      // use true in production (HTTPS)
-       sameSite: "strict" // CSRF protection
-     });
-   
-     await savedUser.save();
-     console.log("User saved:", savedUser);
- 
-     res.status(200).json({ token, message: "OTP Sent to the email" });
-     const subject = "Email Verification";
-     const message = `Your OTP for email verification is ${otp}. It expires in 10 minutes.`;
-     await sendEmail(email, subject, message);
-     console.log("Email sent to the user and otp is generated", otp);
- 
-   } catch (err) {
-     console.error("Error in /sendEmail:", err);
-     res.status(500).send("Error during registration and OTP sending");
-   }
- } 
  
  async function verifyotp(req, res)
  {
@@ -112,18 +139,44 @@ async function register(req, res)
      });
      
    await User.findByIdAndUpdate(user._id, { token }, { new: true });
- 
      res.status(200).json({
        message: "User logged in successfully",
        token
      });
-     console.log(update);
      console.log(token);
    } catch (err) {
      console.error("Error in login:", err);
      res.status(500).json({ error: "Server error" });
    }
  }
+ 
+ async function updatepic(req,res){
+   try{
+    const user=await User.findById(req.user.id);
+    if(!user)
+    {
+      return res.status(400).json({error:"user not found"})
+    }
+    if(req.file)
+    {
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "user_uploads", 
+       });
+     fs.unlinkSync(req.file.path);
+     user.profilePic=result.secure_url;
+     await user.save();
+     res.status(200).json({message:"profile pic updated successfully",profilePic:user.profilePic})
+    }
+  } 
+   catch(err){
+     console.log(err);
+   }
+
+ }
+
+
+
+
  async function forgotpassword(req,res)
  {
  try{
@@ -170,6 +223,6 @@ async function logout(req,res){
 console.log("Message sent: %s", info.messageId);
 }
 
-module.exports={register,verifyotp,login,forgotpassword,logout}
+module.exports={register,verifyotp,login,forgotpassword,logout,updatepic}
  
  

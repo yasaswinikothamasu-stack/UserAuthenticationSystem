@@ -7,7 +7,15 @@ const mongodb=require('mongodb')
 const nodemailer=require('nodemailer');
 const path = require('path');
 const jwt=require('jsonwebtoken');
+const cloudinary = require("cloudinary").v2;
 dotenv.config()
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+  secure: true
+});
 
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
