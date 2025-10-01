@@ -20,9 +20,9 @@ const nodemailer=require('nodemailer')
 
 async function register(req, res) {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !role) {
       return res.status(400).send("All fields required");
     }
 
@@ -46,6 +46,7 @@ async function register(req, res) {
       email,
       password, // hash in production
       profilePic: profilePicUrl,
+      role,
       otp,
       otpExpiresAt,
     });
@@ -84,9 +85,6 @@ async function register(req, res) {
   }
 }
 
-
-
- 
  async function verifyotp(req, res)
  {
   try{
@@ -128,10 +126,10 @@ async function register(req, res) {
      }
  
      const token = jwt.sign(
-       { id: user._id, email: user.email },
-       process.env.JWT_SECRET,
-       { expiresIn: '1h' }
-     );
+        { id: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+    );
       res.cookie("jwt", token, {
        httpOnly: true,
        secure: false,      // use true in production (HTTPS)
@@ -173,9 +171,6 @@ async function register(req, res) {
    }
 
  }
-
-
-
 
  async function forgotpassword(req,res)
  {

@@ -5,12 +5,12 @@ const {verifyotp,register,login,forgotpassword,logout,updatepic}=require('../Con
 const multer = require("multer");
 const cloudinary =require("../config/cloudinary.js");
 const fs = require("fs");
-const authmiddleware = require("../Middleware/middleware.js");
+const {authMiddleware,authorizedRoles} = require("../Middleware/middleware.js");
 const upload = multer({ dest: "uploads/" }); // temp storage
 router.post('/register',upload.single("file"), register);
 router.post('/verifyotp',verifyotp)
 router.post('/login',login)
-router.put('/updatepic',authmiddleware,upload.single("file"),updatepic)
+router.put('/updatepic',authMiddleware,authorizedRoles("user","admin"),upload.single("file"),updatepic)
 router.post('/forgotpassword',forgotpassword)
 router.post('/logout',logout)
 module.exports=router

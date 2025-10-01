@@ -25,9 +25,10 @@ app.use('/uploads', express.static('uploads'));
 
 const productRoutes = require('./Router/productrouter.js');
 const authRoutes = require('./Router/authenticationrouter.js');
-
+const adminRoutes = require('./Router/adminrouter.js');
 app.use('/api', authRoutes);
 app.use('/api', productRoutes);
+app.use('/api', adminRoutes);
 
 PORT=3000;
 
