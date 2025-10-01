@@ -16,7 +16,10 @@ const jwt=require('jsonwebtoken')
 const dotenv=require('dotenv')
 dotenv.config()
 const nodemailer=require('nodemailer')
-
+const OpenAI = require("openai");
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // set in your .env file
+});
 
 async function register(req, res) {
   try {
@@ -147,6 +150,18 @@ async function register(req, res) {
      res.status(500).json({ error: "Server error" });
    }
  }
+async function askgpt(req, res) {
+    const answer = await getChatResponse(req.body.prompt);
+    res.json({ answer });
+}
+
+async function getChatResponse(prompt) {
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }]
+    });
+    return response.choices[0].message.content;
+}
  
  async function updatepic(req,res){
    try{
@@ -218,6 +233,6 @@ async function logout(req,res){
 console.log("Message sent: %s", info.messageId);
 }
 
-module.exports={register,verifyotp,login,forgotpassword,logout,updatepic}
+module.exports={register,verifyotp,login,forgotpassword,logout,updatepic,askgpt}
  
  
